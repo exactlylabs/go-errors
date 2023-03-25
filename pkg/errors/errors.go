@@ -56,6 +56,15 @@ func New(msg string) error {
 	return &baseError{nil, msg, "", getStack(0)}
 }
 
+// W wraps an error in a new error with stacktrace
+func W(err error) error {
+	if baseErr, ok := err.(*baseError); ok {
+		// propagate the typeStr up if there's no new typeStr provided
+		return &baseError{err, "", baseErr.typeStr, getStack(0)}
+	}
+	return &baseError{err, "", "", getStack(0)}
+}
+
 // Wrap wraps the given error in a new Error with the given message, having a stacktrace
 func Wrap(err error, msg string) error {
 	if baseErr, ok := err.(*baseError); ok {

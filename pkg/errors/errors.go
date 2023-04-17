@@ -52,7 +52,8 @@ func (e *baseError) Type() string {
 }
 
 // New creates a new error with stacktrace
-func New(msg string) error {
+func New(msg string, args ...any) error {
+	msg = fmt.Sprintf(msg, args...)
 	return &baseError{nil, msg, "", getStack(0)}
 }
 
@@ -66,7 +67,8 @@ func W(err error) error {
 }
 
 // Wrap wraps the given error in a new Error with the given message, having a stacktrace
-func Wrap(err error, msg string) error {
+func Wrap(err error, msg string, args ...any) error {
+	msg = fmt.Sprintf(msg, args...)
 	if baseErr, ok := err.(*baseError); ok {
 		// propagate the typeStr up if there's no new typeStr provided
 		return &baseError{err, msg, baseErr.typeStr, getStack(0)}
@@ -75,12 +77,14 @@ func Wrap(err error, msg string) error {
 }
 
 // NewWithType creates a new error with stacktrace and a custom type string returned by its Type() method
-func NewWithType(msg, typeStr string) error {
+func NewWithType(msg, typeStr string, args ...any) error {
+	msg = fmt.Sprintf(msg, args...)
 	return &baseError{nil, msg, typeStr, getStack(0)}
 }
 
 // Wrap wraps the given error in a new error with stack trace and a custom type string returned by its Type() method
-func WrapWithType(err error, msg, typeStr string) error {
+func WrapWithType(err error, msg, typeStr string, args ...any) error {
+	msg = fmt.Sprintf(msg, args...)
 	return &baseError{err, msg, typeStr, getStack(0)}
 }
 

@@ -11,12 +11,12 @@ func RecoverPanic(r interface{}, errPtr *error) {
 			if baseErr, ok := panicErr.(*baseError); ok {
 				err = baseErr
 			} else {
-				baseErr := Wrap(panicErr, "caught panic").(*baseError)
+				baseErr := Wrap(panicErr, "caught panic")
 				baseErr.stacktrace = baseErr.stacktrace[2:]
 				err = baseErr
 			}
 		} else {
-			baseErr := New(fmt.Sprintf("caught panic: %v", r)).(*baseError)
+			baseErr := New(fmt.Sprintf("caught panic: %v", r))
 			baseErr.stacktrace = baseErr.stacktrace[2:]
 			err = baseErr
 		}

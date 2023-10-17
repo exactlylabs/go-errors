@@ -22,18 +22,21 @@ func main() {
 	defer sentry.NotifyIfPanic()
 
 	err := TopLevelFunc()
-	fmt.Println(err)
+	fmt.Println(errors.W(err))
 	fmt.Printf("Is BaseErr: %v\n", errors.Is(err, mylibrary.ErrLibraryBaseError))
 	fmt.Printf("Is SentinelErr: %v\n", errors.Is(err, mylibrary.ErrInvalidError))
-	panic(err)
+	panic(errors.W(err))
 }
 
 func TopLevelFunc() (err error) {
-	err = mylibrary.DoLibraryStuff()
-	// Here, we have an error and want now to wrap it into our own sentinel AppError
-	// One possible approach is to:
-	return errors.W(err).WithMetadata(errors.Metadata{
-		"TopLevel": true,
-		"User":     "replaced",
-	})
+	func() {
+		err = mylibrary.DoLibraryStuff()
+		// Here, we have an error and want now to wrap it into our own sentinel AppError
+		// One possible approach is to:
+		err = errors.W(err).WithMetadata(errors.Metadata{
+			"TopLevel": true,
+			"User":     "replaced",
+		})
+	}()
+	return
 }

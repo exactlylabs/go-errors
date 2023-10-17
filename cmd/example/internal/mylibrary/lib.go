@@ -9,7 +9,7 @@ var ErrLibraryBaseError = errors.NewSentinel("LibraryBaseError", "")
 
 // ErrInvalidError is a specific error from this Library, it wraps ErrLibraryBaseError
 // It also adds a new Type string, to be used when reporting to Sentry using github.com/exactlylabs/go-monitor/pkg/sentry package
-var ErrInvalidError = errors.WrapWithType(ErrLibraryBaseError, "something went wrong", "ErrInvalidError")
+var ErrInvalidError = errors.WrapAsSentinel(ErrLibraryBaseError, "ErrInvalidError", "something went wrong")
 
 func DoLibraryStuff() error {
 	// Wrap Sentinel error ErrInvalidError to include the correct stacktrace, otherwise it would miss this function

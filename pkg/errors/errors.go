@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
+	"strings"
 
 	"errors"
 )
@@ -71,24 +72,28 @@ func (e *baseError) Error() string {
 	}
 	if len(e.stacktrace) > 0 {
 		topStack := e.stacktrace[0]
-		if contextMsg != "" {
-			contextMsg = fmt.Sprintf("%s@%s.%s", e.typeStr, topStack.Package(), topStack.FuncName())
-		} else {
-			contextMsg = fmt.Sprintf("%s.%s", topStack.Package(), topStack.FuncName())
-		}
+		frameStr := formatFrame(topStack)
+		contextMsg = fmt.Sprintf("%s@%s", contextMsg, frameStr)
 	}
 
 	msg := ""
 	if contextMsg != "" {
-		msg = contextMsg
+		msg = fmt.Sprintf("[%s]", contextMsg)
 	}
 	if e.msg != "" {
-		msg = fmt.Sprintf("[%s] %s", msg, e.msg)
+		msg = fmt.Sprintf("%s %s", msg, e.msg)
 	}
 	if e.cause != nil {
-		msg = fmt.Sprintf("%s => %s", msg, e.cause.Error())
+		// Only add the cause if it's not a sentinel error
+		if baseErr, ok := e.cause.(*baseError); !ok || !baseErr.IsSentinel() {
+			msg = fmt.Sprintf("%s => %s", msg, e.cause.Error())
+		}
 	}
 	return msg
+}
+
+func (e *baseError) IsSentinel() bool {
+	return e.stacktrace == nil
 }
 
 func (e *baseError) Unwrap() error {
@@ -167,12 +172,17 @@ func WrapWithType(err error, msg, typeStr string, args ...any) *baseError {
 	return &baseError{err, msg, typeStr, getStack(0), meta}
 }
 
+// NewSentinel error, without a stacktrace or metadata assigned to it.
 func NewSentinel(typeStr, msg string) *baseError {
 	return &baseError{nil, msg, typeStr, nil, Metadata{}}
 }
 
-// SentinelWithStack wraps the given sentinel error and adds a stacktrace
-// If Sentinel error is a baseError, it creates a copy with the new stacktrace
+// Wrap a sentinel error as another sentinel error, without a stacktrace or metadata assigned to it.
+func WrapAsSentinel(err error, typeStr, msg string) *baseError {
+	return &baseError{err, msg, typeStr, nil, Metadata{}}
+}
+
+// SentinelWithStack wraps the given sentinel error. It adds a stacktrace and propagates both the type and message.
 func SentinelWithStack(err error) *baseError {
 	var baseErr *baseError
 	if As(err, &baseErr) {
@@ -207,4 +217,10 @@ func GetMetadata(err error) *Metadata {
 		return &baseErr.metadata
 	}
 	return nil
+}
+
+func formatFrame(frame Frame) string {
+	pathEnd := strings.LastIndex(frame.Function, "/")
+	funcName := frame.Function[pathEnd+1:]
+	return fmt.Sprintf("%s:%d", funcName, frame.Line)
 }
